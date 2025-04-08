@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 st.title("Dashboard Schoenverkoop")
 
 # ======= Dummy dataset maken ========
-df = pd.read_csv("jouw_bestandsnaam.csv")
+df = pd.read_csv("exclusieve_schoenen_verkoop_met_locatie.csv")
 
 # ======= Filters ========
 st.sidebar.header("Filters")
