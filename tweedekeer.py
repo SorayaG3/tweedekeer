@@ -14,7 +14,7 @@ st.sidebar.header("Filters")
 selected_land = st.sidebar.selectbox("Selecteer Land", sorted(df['land'].unique()))
 
 # Filter toepassen
-filtered_df = df['land'] == selected_land)]
+filtered_df = (df['land'] == selected_land)
 
 # ======= Tabs ========
 tab1, tab2 = st.tabs(["Aantal per Merk", "Aantal per Maand + Targetlijn"])
