@@ -3,62 +3,66 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# ======= Header toevoegen ========
-st.title("Dashboard Schoenverkoop")
+# dataset inladen
+df = pd.read_csv('exclusieve_schoenen_verkoop_met_locatie.csv')
 
-# ======= Dummy dataset maken ========
-df = pd.read_csv("exclusieve_schoenen_verkoop_met_locatie.csv")
+# verwachte kolomnamen in lowercase: 'merk', 'aantal', 'land'
+df.columns = df.columns.str.lower()  # zet kolomnamen in lowercase
 
-# ======= Filters ========
-st.sidebar.header("Filters")
-selected_land = st.sidebar.selectbox("Selecteer Land", sorted(df['land'].unique()))
+# controleer of de verwachte kolommen aanwezig zijn
+required_columns = {'merk', 'aantal', 'land'}
+if not required_columns.issubset(df.columns):
+    st.error(f"de dataset moet de kolommen bevatten: {required_columns}")
+    st.stop()
 
-# Filter toepassen
-filtered_df = (df['land'] == selected_land)
+# titel
+st.title('dashboard schoenverkoop')
 
-# ======= Tabs ========
-tab1, tab2 = st.tabs(["Aantal per Merk", "Aantal per Maand + Targetlijn"])
+# filteroptie
+land_optie = st.sidebar.selectbox('selecteer land', sorted(df['land'].unique()))
 
-with tab1:
-    st.subheader("Totaal aantal per Merk")
-    grouped_merk = filtered_df.groupby('merk', as_index=False)['aantal'].sum()
-    
-    fig_merk = px.bar(grouped_merk, x='merk', y='aantal', color='merk',
-                      title='Aantal per Merk',
-                      labels={'Aantal': 'Aantal', 'Merk': 'Merk'})
-    
-    st.plotly_chart(fig_merk, use_container_width=True)
+# filter toepassen
+filtered_df = df[df['land'] == land_optie]
 
-with tab2:
-    st.subheader("Aantal per land met Targetlijn")
-    grouped_maand = filtered_df.groupby('land', as_index=False)['aantal'].sum()
-    
-    # Kleurcodering per regel
-    grouped_maand['Kleur'] = grouped_maand['aantal'].apply(lambda x: 'red' if x < 20 else 'green')
-    
-    fig_maand = go.Figure()
-    fig_maand.add_trace(go.Bar(
-        x=grouped_maand['aantal'],
-        y=grouped_maand['maand'],
-        orientation='h',
-        marker_color=grouped_maand['Kleur'],
+# tabs
+tab1, tab2 = st.tabs(['tab 1', 'tab 2'])
+
+def toon_visuals(dataframe):
+    # barchart
+    st.subheader('barchart: aantal per merk')
+    bar_df = dataframe.groupby('merk', as_index=False)['aantal'].sum()
+    fig_bar = px.bar(bar_df, x='merk', y='aantal', color='merk')
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # line chart met targetlijn
+    st.subheader('line chart: aantal per merk met targetlijn')
+    fig_line = go.Figure()
+
+    fig_line.add_trace(go.Scatter(
+        x=bar_df['merk'],
+        y=bar_df['aantal'],
+        mode='lines+markers',
         name='aantal'
     ))
-    
-    # Targetlijn toevoegen
-    fig_maand.add_shape(
-        type='line',
-        x0=20, x1=20,
-        y0=-0.5, y1=len(grouped_maand)-0.5,
-        line=dict(color='blue', width=2, dash='dash'),
-        name='Target'
+
+    fig_line.add_trace(go.Scatter(
+        x=bar_df['merk'],
+        y=[10] * len(bar_df),
+        mode='lines',
+        name='target',
+        line=dict(dash='dash', color='red')
+    ))
+
+    fig_line.update_layout(
+        yaxis_title='aantal',
+        xaxis_title='merk'
     )
 
-    fig_maand.update_layout(
-        title='Aantal per land met Targetlijn (20)',
-        xaxis_title='aantal',
-        yaxis_title='land',
-        showlegend=False
-    )
+    st.plotly_chart(fig_line, use_container_width=True)
 
-    st.plotly_chart(fig_maand, use_container_width=True)
+# beide tabs tonen dezelfde visuals
+with tab1:
+    toon_visuals(filtered_df)
+
+with tab2:
+    toon_visuals(filtered_df)
