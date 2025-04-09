@@ -47,7 +47,7 @@ def toon_visuals(dataframe):
 
     fig_line.add_trace(go.Scatter(
         x=bar_df['merk'],
-        y=[10] * len(bar_df),
+        y=[350] * len(bar_df),
         mode='lines',
         name='target',
         line=dict(dash='dash', color='red')
